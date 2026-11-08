@@ -1,0 +1,6 @@
+node_modules
+dist
+dds.html
+.env.local
+.env*.local
+.vercel

@@ -30,7 +30,8 @@ export interface ChatState {
   msgs: ChatMsg[];
   pending: boolean;
   elapsed: number;
-  send: (text: string) => void;
+  /** fresh: true면 이전 대화를 지우고 새 대화로 시작 */
+  send: (text: string, opts?: { fresh?: boolean }) => void;
   retry: () => void;
   stop: () => void;
   reset: () => void;
@@ -66,6 +67,7 @@ export function useChat(): ChatState {
     const timer = setTimeout(() => { timedOut = true; ctrl.abort(); }, TIMEOUT);
     try {
       const reply = await askChat(history.map(({ role, content }) => ({ role, content })), ctrl.signal);
+      if (ctrl.signal.aborted) return;
       setMsgs(m => [...m, { id: uid(), role: "assistant", content: reply.answer, sources: reply.sources, at: Date.now() }]);
     } catch (e) {
       const aborted = e instanceof DOMException && e.name === "AbortError";
@@ -74,15 +76,20 @@ export function useChat(): ChatState {
       setMsgs(m => [...m, { id: uid(), role: "assistant", content: text, error: true, at: Date.now() }]);
     } finally {
       clearTimeout(timer);
+      // 새 요청이 이미 시작됐으면(fresh 전송) 그 요청의 pending 상태를 건드리지 않음
       if (abortRef.current === ctrl) abortRef.current = null;
-      setPending(false);
+      if (abortRef.current === null) setPending(false);
     }
   }, []);
 
-  const send = useCallback((text: string) => {
+  const send = useCallback((text: string, opts?: { fresh?: boolean }) => {
     const q = text.trim();
-    if (!q || abortRef.current) return;
-    const history = msgsRef.current.filter(m => !m.error);
+    if (!q) return;
+    if (opts?.fresh) {
+      abortRef.current?.abort();
+      abortRef.current = null;
+    } else if (abortRef.current) return;
+    const history = opts?.fresh ? [] : msgsRef.current.filter(m => !m.error);
     run([...history, { id: uid(), role: "user", content: q.slice(0, 4000), at: Date.now() }]);
   }, [run]);
 

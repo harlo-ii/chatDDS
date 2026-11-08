@@ -11,6 +11,8 @@ export interface ChatRequest {
   draft?: string;
   /** true면 바로 전송 */
   autoSend?: boolean;
+  /** true면 이전 대화를 지우고 새 대화로 전송 (홈 추천 질문) */
+  fresh?: boolean;
 }
 
 const TOPICS: { label: string; icon: LucideIcon; color: string; q: string }[] = [
@@ -184,7 +186,7 @@ export default function ChatPage({ chat, userName, request }: { chat: ChatState;
   useEffect(() => {
     if (!request || handled.current === request) return;
     handled.current = request;
-    if (request.autoSend && request.draft) chat.send(request.draft);
+    if (request.autoSend && request.draft) chat.send(request.draft, { fresh: request.fresh });
     else if (request.draft) { setInput(request.draft); setTimeout(() => inputRef.current?.focus(), 50); }
   }, [request, chat]);
 

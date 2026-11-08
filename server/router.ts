@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { handleBooks } from "./books";
-import { handleChat } from "./chat";
+import { handleChat, handleChatStatus } from "./chat";
 import { handleVideos } from "./videos";
 import type { Env, HandlerResult } from "./common";
 
@@ -10,6 +10,7 @@ type PostRoute = (body: unknown, env: Env) => Promise<HandlerResult>;
 const getRoutes: Record<string, GetRoute> = {
   "/api/videos": handleVideos,
   "/api/books": handleBooks,
+  "/api/chat": handleChatStatus,
 };
 const postRoutes: Record<string, PostRoute> = {
   "/api/chat": handleChat,
@@ -53,7 +54,9 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse, env: 
     }
     send(res, await post(body, env));
   } else {
-    send(res, bad(`${getRoutes[path] ? "GET" : "POST"}만 지원합니다.`, 405));
+    const allowed = [path in getRoutes ? "GET" : "", path in postRoutes ? "POST" : ""].filter(Boolean).join(", ");
+    res.setHeader("Allow", allowed);
+    send(res, bad(`${allowed}만 지원합니다.`, 405));
   }
   return true;
 }

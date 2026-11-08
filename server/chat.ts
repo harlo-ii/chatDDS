@@ -26,6 +26,19 @@ function validate(body: unknown): ChatMessage[] {
   return clean;
 }
 
+/** GET /api/chat — 브라우저로 열었을 때 키 설정 여부만 알려 주는 상태 확인용 */
+export async function handleChatStatus(_p: URLSearchParams, env: Env): Promise<HandlerResult> {
+  const keyConfigured = !!env.CHATDDS_API_KEY;
+  return {
+    status: keyConfigured ? 200 : 503,
+    body: {
+      ok: keyConfigured,
+      keyConfigured,
+      usage: 'POST /api/chat  { "messages": [{ "role": "user", "content": "질문" }] }',
+    },
+  };
+}
+
 export async function handleChat(body: unknown, env: Env): Promise<HandlerResult> {
   const key = env.CHATDDS_API_KEY;
   if (!key) return fail(new ApiFailure("NO_KEY", "서버에 CHATDDS_API_KEY가 설정되지 않았습니다.", 503));

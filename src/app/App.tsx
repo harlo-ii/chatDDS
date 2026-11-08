@@ -794,7 +794,7 @@ function HomePage({ onNav, savedVideos, onSaveVideo, savedBooks, onSaveBook }: {
             </form>
             <div className="flex flex-wrap gap-2 mt-3">
               {["캄브리아기 대폭발이란?", "젊은 지구론의 근거는?", "공룡은 언제 살았나요?"].map(q => (
-                <button key={q} onClick={() => onNav("community", { draft: q, autoSend: true } satisfies ChatRequest)}
+                <button key={q} onClick={() => onNav("community", { draft: q, autoSend: true, fresh: true } satisfies ChatRequest)}
                   className="px-3 py-1.5 rounded-full border border-border bg-card text-xs text-foreground hover:border-primary/40 hover:text-primary transition-colors">
                   {q}
                 </button>
